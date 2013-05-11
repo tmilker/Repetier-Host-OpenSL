@@ -1,4 +1,6 @@
-﻿namespace RepetierHost
+﻿#define OPENSL
+
+namespace RepetierHost
 {
     partial class Main
     {
@@ -166,7 +168,9 @@
             this.fileToolStripMenuItem,
             this.settingsToolStripMenuItem,
             this.slicerToolStripMenuItem,
+#if !OPENSL
             this.temperatureToolStripMenuItem,
+#endif
             this.printerToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menu.Location = new System.Drawing.Point(0, 0);
