@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+#define OPENSL
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -237,7 +239,9 @@ namespace RepetierHost
             tabModel.Controls.Add(stlComposer1);
             printPanel = new PrintPanel();
             printPanel.Dock = DockStyle.Fill;
+#if OPENSL
             printPanel.hideExtruderTemp();
+#endif
             tabPrint.Controls.Add(printPanel);
             printerSettings.formToCon();
             logView = new LogView();
