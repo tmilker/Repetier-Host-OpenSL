@@ -1113,7 +1113,9 @@
             // tabControlView
             // 
             this.tabControlView.Controls.Add(this.tabPage3DView);
+#if !OPENSL
             this.tabControlView.Controls.Add(this.tabPageTemp);
+#endif
             this.tabControlView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControlView.Location = new System.Drawing.Point(0, 0);
             this.tabControlView.Name = "tabControlView";
