@@ -35,7 +35,7 @@ namespace RepetierHost.view
         LinkedList<string> commands = new LinkedList<string>();
         int commandPos = 0;
         bool createCommands = true;
-        float lastx = -1000, lasty = -1000, lastz = -1000;
+        float lastx = -1000, lasty = -1000, lastzl = -1000, lastzr = -1000;
         private PrinterStatus status = PrinterStatus.disconnected;
         private long statusSet=0;
         public PrintPanel()
@@ -250,7 +250,7 @@ namespace RepetierHost.view
                 comboExtruder.SelectedIndex = ann.activeExtruderId;
             createCommands = true;
         }
-        private void coordUpdate(GCode code,float x,float y,float z) {
+        private void coordUpdate(GCode code,float x,float y,float zl,float zr) {
             if (x != -lastx || x==0)
             {
                 labelX.Text = "X=" + x.ToString("0.00");
@@ -269,14 +269,23 @@ namespace RepetierHost.view
                     labelY.ForeColor = Color.Red;
                 lasty = y;
             }
-            if (z != lastz || z==0)
+            if (zl != lastzl || zl==0)
             {
-                labelZ.Text = "Z=" + z.ToString("0.00");
+                labelZL.Text = "ZL=" + zl.ToString("0.00");
                 if (ann.hasZHome)
-                    labelZ.ForeColor = SystemColors.ControlText;
+                    labelZL.ForeColor = SystemColors.ControlText;
                 else
-                    labelZ.ForeColor = Color.Red;
-                lastz = z;
+                    labelZL.ForeColor = Color.Red;
+                lastzl = zl;
+            }
+            if (zr != lastzr || zr == 0)
+            {
+                labelZR.Text = "ZR=" + zr.ToString("0.00");
+                if (ann.hasZHome)
+                    labelZR.ForeColor = SystemColors.ControlText;
+                else
+                    labelZR.ForeColor = Color.Red;
+                lastzr = zr;
             }
         }
         public void UpdateConStatus(bool c)
@@ -315,8 +324,10 @@ namespace RepetierHost.view
             arrowButtonXPlus.Enabled = c;
             arrowButtonYMinus.Enabled = c;
             arrowButtonYPlus.Enabled = c;
-            arrowButtonZMinus.Enabled = c;
-            arrowButtonZPlus.Enabled = c;
+            arrowButtonZLMinus.Enabled = c;
+            arrowButtonZLPlus.Enabled = c;
+            arrowButtonZRPlus.Enabled = c;
+            arrowButtonZRMinus.Enabled = c;
             sliderSpeed.Enabled = c && (con.isMarlin || con.isRepetier);
             sliderFlowrate.Enabled = c && (con.isMarlin || con.isRepetier);
             numericUpDownSpeed.Enabled = c && (con.isMarlin || con.isRepetier);
@@ -379,10 +390,12 @@ namespace RepetierHost.view
             bool wasrel = con.analyzer.relative;
             //if(!wasrel) 
                 con.injectManualCommand("G91");
-            if(axis.Equals("Z"))
-                con.injectManualCommand("G1 " + axis + amount.ToString(GCode.format) + " F" + con.maxZFeedRate.ToString(GCode.format));
-            else
-                con.injectManualCommand("G1 " + axis + amount.ToString(GCode.format) + " F" + con.travelFeedRate.ToString(GCode.format));
+                if (axis.Equals("Z"))
+                    con.injectManualCommand("G1 " + axis + amount.ToString(GCode.format) + " F" + con.maxZFeedRate.ToString(GCode.format));
+                else if (axis.Equals("ZL"))
+                    con.injectManualCommand("G0 L" + amount.ToString(GCode.format) + " F" + con.maxZFeedRate.ToString(GCode.format));
+                else
+                    con.injectManualCommand("G1 " + axis + amount.ToString(GCode.format) + " F" + con.travelFeedRate.ToString(GCode.format));
             //if (!wasrel) 
                 con.injectManualCommand("G90");
             con.ReturnInjectLock();
@@ -718,7 +731,7 @@ namespace RepetierHost.view
 
         private void timer_Tick(object sender, EventArgs e)
         {
-            coordUpdate(null, ann.x, ann.y, ann.z);
+            coordUpdate(null, ann.x, ann.y, ann.zl, ann.zr);
             updateStatus();
         }
 
@@ -805,12 +818,21 @@ namespace RepetierHost.view
             else
                 labelMoveDist.Text = value + " mm";
         }
-        private void Z_arrowValueChanged(ArrowButton sender, string value)
+
+        private void ZL_arrowValueChanged(ArrowButton sender, string value)
         {
             if (value.Length == 0)
-                labelZDiff.Text = "";
+                labelZLDiff.Text = "";
             else
-                labelZDiff.Text = value + " mm";
+                labelZLDiff.Text = value + " mm";
+        }
+
+        private void ZR_arrowValueChanged(ArrowButton sender, string value)
+        {
+            if (value.Length == 0)
+                labelZLDiff.Text = "";
+            else
+                labelZLDiff.Text = value + " mm";
         }
 
         private void arrowButtonXPlus_Click(object sender, EventArgs e)
@@ -842,19 +864,35 @@ namespace RepetierHost.view
             moveHead("Y", d);
         }
 
-        private void arrowButtonZPlus_Click(object sender, EventArgs e)
+        private void arrowButtonZLPlus_Click(object sender, EventArgs e)
         {
             float d = ((ArrowButton)sender).CurrentValueF;
-            if (ann.hasZHome && d + ann.z > Main.printerSettings.PrintAreaHeight) d = Main.printerSettings.PrintAreaHeight - ann.z;
-            moveHead("Z", d);
+            if (ann.hasZHome && d + ann.zl > Main.printerSettings.PrintAreaHeight) d = Main.printerSettings.PrintAreaHeight - ann.zl;
+            moveHead("ZL", d);
 
         }
 
-        private void arrowButtonZMinus_Click(object sender, EventArgs e)
+        private void arrowButtonZRPlus_Click(object sender, EventArgs e)
+        {
+            float d = ((ArrowButton)sender).CurrentValueF;
+            if (ann.hasZHome && d + ann.zr > Main.printerSettings.PrintAreaHeight) d = Main.printerSettings.PrintAreaHeight - ann.zr;
+            moveHead("ZR", d);
+
+        }
+
+        private void arrowButtonZLMinus_Click(object sender, EventArgs e)
         {
             float d = -((ArrowButton)sender).CurrentValueF;
-            if (FormPrinterSettings.ps.printerType != 3 && (ann.hasZHome && d + ann.z < 0)) d = -ann.z;
-            moveHead("Z", d);
+            if (FormPrinterSettings.ps.printerType != 3 && (ann.hasZHome && d + ann.zl < 0)) d = -ann.zl;
+            moveHead("ZL", d);
+
+        }
+
+        private void arrowButtonZRMinus_Click(object sender, EventArgs e)
+        {
+            float d = -((ArrowButton)sender).CurrentValueF;
+            if (FormPrinterSettings.ps.printerType != 3 && (ann.hasZHome && d + ann.zr < 0)) d = -ann.zr;
+            moveHead("ZR", d);
 
         }
 
@@ -892,6 +930,5 @@ namespace RepetierHost.view
             if (!createCommands) return;
             con.injectManualCommand("T" + comboExtruder.SelectedIndex);
         }
-
      }
 }
