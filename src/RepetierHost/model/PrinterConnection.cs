@@ -14,6 +14,8 @@
    limitations under the License.
 */
 
+#define OPENSL
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -758,8 +760,12 @@ namespace RepetierHost.model
                 GetInjectLock();
                 injectManualCommand("N0 M110"); // Make sure we tal about the same linenumbers
                 injectManualCommand("M115"); // Check firmware
+
+#if !OPENSL
                 injectManualCommand("T" + Main.main.printPanel.comboExtruder.SelectedIndex);
                 injectManualCommand("M105"); // Read temperature
+#endif
+
                 ReturnInjectLock();
                 if (eventConnectionChange != null)
                     eventConnectionChange(Trans.T("L_CONNECTED"));
