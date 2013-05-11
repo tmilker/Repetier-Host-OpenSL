@@ -1,6 +1,4 @@
-﻿#define OPENSL
-
-namespace RepetierHost
+﻿namespace RepetierHost
 {
     partial class Main
     {

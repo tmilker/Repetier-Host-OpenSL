@@ -14,8 +14,6 @@
    limitations under the License.
 */
 
-#define OPENSL
-
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
